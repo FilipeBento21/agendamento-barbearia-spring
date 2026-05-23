@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: agendamento-barbearia
   datasource:
     url: jdbc:h2:mem:projetodb
     username: sa
