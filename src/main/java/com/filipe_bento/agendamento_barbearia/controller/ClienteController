@@ -1,0 +1,37 @@
+package com.filipe_bento.agendamento_barbearia.controller;
+
+import com.filipe_bento.agendamento_barbearia.entity.Cliente;
+import com.filipe_bento.agendamento_barbearia.repository.ClienteRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/clientes")
+@RequiredArgsConstructor
+public class ClienteController {
+
+    private final ClienteRepository repository;
+
+    // GET todos
+    @GetMapping
+    public ResponseEntity<Iterable<Cliente>> listar() {
+        return ResponseEntity.ok(repository.findAll());
+    }
+
+    // GET por ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Cliente> buscar(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // GET por nome
+    @GetMapping("/busca")
+    public ResponseEntity<List<Cliente>> buscarPorNome(@RequestParam String nome) {
+        return ResponseEntity.ok(repository.findByNomeContainingIgnoreCase(nome));
+    }
+}
