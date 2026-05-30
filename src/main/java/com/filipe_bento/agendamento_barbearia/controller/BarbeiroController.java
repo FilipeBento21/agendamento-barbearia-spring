@@ -1,8 +1,10 @@
 package com.filipe_bento.agendamento_barbearia.controller;
 
 import com.filipe_bento.agendamento_barbearia.entity.Barbeiro;
-import com.filipe_bento.agendamento_barbearia.repository.BarbeiroRepository;
+import com.filipe_bento.agendamento_barbearia.service.BarbeiroService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,22 +15,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BarbeiroController {
 
-    private final BarbeiroRepository repository;
+    private final BarbeiroService barbeiroService;
+
+    @PostMapping
+    public ResponseEntity<Barbeiro> criar(@Valid @RequestBody Barbeiro barbeiro) {
+        Barbeiro novoBarbeiro = barbeiroService.salvar(barbeiro);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoBarbeiro);
+    }
 
     @GetMapping
-    public ResponseEntity<Iterable<Barbeiro>> listar() {
-        return ResponseEntity.ok(repository.findAll());
+    public ResponseEntity<List<Barbeiro>> listar() {
+        return ResponseEntity.ok(barbeiroService.listarTodos());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Barbeiro> buscar(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(barbeiroService.buscarPorId(id));
     }
 
     @GetMapping("/busca")
     public ResponseEntity<List<Barbeiro>> buscarPorNome(@RequestParam String nome) {
-        return ResponseEntity.ok(repository.findByNomeContainingIgnoreCase(nome));
+        return ResponseEntity.ok(barbeiroService.buscarPorNome(nome));
     }
 }

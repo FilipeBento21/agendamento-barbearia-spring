@@ -1,77 +1,41 @@
 package com.filipe_bento.agendamento_barbearia.controller;
 
 import com.filipe_bento.agendamento_barbearia.entity.Agendamento;
-import com.filipe_bento.agendamento_barbearia.entity.Servico;
-import com.filipe_bento.agendamento_barbearia.repository.AgendamentoRepository;
-import com.filipe_bento.agendamento_barbearia.repository.BarbeiroRepository;
-import com.filipe_bento.agendamento_barbearia.repository.ClienteRepository;
-import com.filipe_bento.agendamento_barbearia.repository.ServicoRepository;
+import com.filipe_bento.agendamento_barbearia.service.AgendamentoService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor; // Usando o padrão do seu colega
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/agendamentos")
 @RequiredArgsConstructor
 public class AgendamentoController {
 
-    private final AgendamentoRepository agendamentoRepository;
-    private final ClienteRepository clienteRepository;
-    private final BarbeiroRepository barbeiroRepository;
-    private final ServicoRepository servicoRepository;
+    private final AgendamentoService agendamentoService;
 
     @PostMapping
-    public ResponseEntity<?> criarAgendamento(@Valid @RequestBody Agendamento agendamento) {
-        
-        if (agendamento.getCliente() == null || !clienteRepository.existsById(agendamento.getCliente().getId())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cliente não encontrado.");
-        }
-        
-        if (agendamento.getBarbeiro() == null || !barbeiroRepository.existsById(agendamento.getBarbeiro().getId())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Barbeiro não encontrado.");
-        }
-
-        Set<Servico> servicosValidados = new HashSet<>();
-        for (Servico s : agendamento.getServicos()) {
-            Servico servicoBanco = servicoRepository.findById(s.getId()).orElse(null);
-            if (servicoBanco == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Serviço com ID " + s.getId() + " não encontrado.");
-            }
-            servicosValidados.add(servicoBanco);
-        }
-        
-        agendamento.setCliente(clienteRepository.findById(agendamento.getCliente().getId()).get());
-        agendamento.setBarbeiro(barbeiroRepository.findById(agendamento.getBarbeiro().getId()).get());
-        agendamento.setServicos(servicosValidados);
-
-        Agendamento novoAgendamento = agendamentoRepository.save(agendamento);
+    public ResponseEntity<Agendamento> criarAgendamento(@Valid @RequestBody Agendamento agendamento) {
+        Agendamento novoAgendamento = agendamentoService.salvar(agendamento);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoAgendamento);
     }
 
     @GetMapping
     public ResponseEntity<List<Agendamento>> listarTodos() {
-        return ResponseEntity.ok(agendamentoRepository.findAll());
+        return ResponseEntity.ok(agendamentoService.listarTodos());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Agendamento> buscarPorId(@PathVariable Long id) {
-        return agendamentoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(agendamentoService.buscarPorId(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarAgendamento(@PathVariable Long id) {
-        if (agendamentoRepository.existsById(id)) {
-            agendamentoRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        agendamentoService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }
