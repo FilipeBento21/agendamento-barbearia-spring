@@ -48,7 +48,8 @@ public class AgendamentoService {
         Set<Servico> servicosValidados = new HashSet<>();
         for (Servico s : agendamento.getServicos()) {
             Servico servicoBanco = servicoRepository.findById(s.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Serviço com ID " + s.getId() + " não encontrado."));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Serviço com ID " + s.getId() + " não encontrado."));
             servicosValidados.add(servicoBanco);
         }
 
@@ -63,5 +64,24 @@ public class AgendamentoService {
     public void deletar(Long id) {
         Agendamento agendamento = buscarPorId(id);
         agendamentoRepository.delete(agendamento);
+    }
+
+    @Transactional
+    public Agendamento atualizar(Long id, Agendamento dados) {
+        Agendamento agendamento = buscarPorId(id);
+
+        if (dados.getDataHora() != null)
+            agendamento.setDataHora(dados.getDataHora());
+
+        if (dados.getCliente() != null)
+            agendamento.setCliente(dados.getCliente());
+
+        if (dados.getBarbeiro() != null)
+            agendamento.setBarbeiro(dados.getBarbeiro());
+
+        if (dados.getServicos() != null)
+            agendamento.setServicos(dados.getServicos());
+
+        return agendamentoRepository.save(agendamento);
     }
 }

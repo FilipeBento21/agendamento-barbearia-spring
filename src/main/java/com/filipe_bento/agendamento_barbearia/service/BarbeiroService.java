@@ -35,4 +35,23 @@ public class BarbeiroService {
     public Barbeiro salvar(Barbeiro barbeiro) {
         return repository.save(barbeiro);
     }
+
+    @Transactional
+    public Barbeiro atualizar(Long id, Barbeiro dados) {
+        Barbeiro barbeiro = buscarPorId(id);
+
+        if (dados.getNome() != null)
+            barbeiro.setNome(dados.getNome());
+
+        // se tiver mais campos, adiciona aqui no mesmo padrão
+
+        return repository.save(barbeiro);
+    }
+
+    @Transactional
+    public void deletar(Long id) {
+        Barbeiro barbeiro = buscarPorId(id);
+        repository.delete(barbeiro);
+    }
+    
 }

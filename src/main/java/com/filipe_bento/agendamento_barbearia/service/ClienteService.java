@@ -35,4 +35,26 @@ public class ClienteService {
     public Cliente salvar(Cliente cliente) {
         return repository.save(cliente);
     }
+
+    @Transactional
+    public Cliente atualizar(Long id, Cliente dados) {
+        Cliente cliente = buscarPorId(id);
+
+        if (dados.getNome() != null)
+            cliente.setNome(dados.getNome());
+
+        if (dados.getTelefone() != null)
+            cliente.setTelefone(dados.getTelefone());
+
+        if (dados.getEmail() != null)
+            cliente.setEmail(dados.getEmail());
+
+        return repository.save(cliente);
+    }
+
+    @Transactional
+    public void deletar(Long id) {
+        Cliente cliente = buscarPorId(id);
+        repository.delete(cliente);
+    }
 }

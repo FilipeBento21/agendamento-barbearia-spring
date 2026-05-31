@@ -37,4 +37,18 @@ public class BarbeiroController {
     public ResponseEntity<List<Barbeiro>> buscarPorNome(@RequestParam String nome) {
         return ResponseEntity.ok(barbeiroService.buscarPorNome(nome));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Barbeiro> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody Barbeiro barbeiro) {
+
+        return ResponseEntity.ok(barbeiroService.atualizar(id, barbeiro));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        barbeiroService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }
