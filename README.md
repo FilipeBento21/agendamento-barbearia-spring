@@ -269,7 +269,7 @@ spring.datasource.password=123456
 # 👨‍💻 Autores
 
 * Filipe Bento
-* (Nome do colega)
+* Hytalo Leão
 
 ---
 
