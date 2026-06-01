@@ -1,9 +1,12 @@
 package com.filipe_bento.agendamento_barbearia.controller;
 
-import com.filipe_bento.agendamento_barbearia.entity.Barbeiro;
+import com.filipe_bento.agendamento_barbearia.dto.barbeiro.BarbeiroRequestDTO;
+import com.filipe_bento.agendamento_barbearia.dto.barbeiro.BarbeiroResponseDTO;
 import com.filipe_bento.agendamento_barbearia.service.BarbeiroService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,32 +21,35 @@ public class BarbeiroController {
     private final BarbeiroService barbeiroService;
 
     @PostMapping
-    public ResponseEntity<Barbeiro> criar(@Valid @RequestBody Barbeiro barbeiro) {
-        Barbeiro novoBarbeiro = barbeiroService.salvar(barbeiro);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoBarbeiro);
+    public ResponseEntity<BarbeiroResponseDTO> criar(
+            @Valid @RequestBody BarbeiroRequestDTO dto) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(barbeiroService.salvar(dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<Barbeiro>> listar() {
+    public ResponseEntity<List<BarbeiroResponseDTO>> listar() {
         return ResponseEntity.ok(barbeiroService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Barbeiro> buscar(@PathVariable Long id) {
+    public ResponseEntity<BarbeiroResponseDTO> buscar(@PathVariable Long id) {
         return ResponseEntity.ok(barbeiroService.buscarPorId(id));
     }
 
     @GetMapping("/busca")
-    public ResponseEntity<List<Barbeiro>> buscarPorNome(@RequestParam String nome) {
+    public ResponseEntity<List<BarbeiroResponseDTO>> buscarPorNome(@RequestParam String nome) {
         return ResponseEntity.ok(barbeiroService.buscarPorNome(nome));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Barbeiro> atualizar(
+    public ResponseEntity<BarbeiroResponseDTO> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody Barbeiro barbeiro) {
+            @Valid @RequestBody BarbeiroRequestDTO dto) {
 
-        return ResponseEntity.ok(barbeiroService.atualizar(id, barbeiro));
+        return ResponseEntity.ok(barbeiroService.atualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")

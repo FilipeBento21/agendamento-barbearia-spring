@@ -1,5 +1,7 @@
 package com.filipe_bento.agendamento_barbearia.service;
 
+import com.filipe_bento.agendamento_barbearia.dto.cliente.ClienteRequestDTO;
+import com.filipe_bento.agendamento_barbearia.dto.cliente.ClienteResponseDTO;
 import com.filipe_bento.agendamento_barbearia.entity.Cliente;
 import com.filipe_bento.agendamento_barbearia.exception.ResourceNotFoundException;
 import com.filipe_bento.agendamento_barbearia.repository.ClienteRepository;
@@ -16,45 +18,70 @@ public class ClienteService {
     private final ClienteRepository repository;
 
     @Transactional(readOnly = true)
-    public List<Cliente> listarTodos() {
-        return repository.findAll();
+    public List<ClienteResponseDTO> listarTodos() {
+        return repository.findAll()
+                .stream()
+                .map(ClienteResponseDTO::fromEntity)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public Cliente buscarPorId(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com o ID: " + id));
+    public ClienteResponseDTO buscarPorId(Long id) {
+        Cliente cliente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Cliente não encontrado com o ID: " + id));
+
+        return ClienteResponseDTO.fromEntity(cliente);
     }
 
     @Transactional(readOnly = true)
-    public List<Cliente> buscarPorNome(String nome) {
-        return repository.findByNomeContainingIgnoreCase(nome);
+    public List<ClienteResponseDTO> buscarPorNome(String nome) {
+        return repository.findByNomeContainingIgnoreCase(nome)
+                .stream()
+                .map(ClienteResponseDTO::fromEntity)
+                .toList();
     }
 
     @Transactional
-    public Cliente salvar(Cliente cliente) {
-        return repository.save(cliente);
+    public ClienteResponseDTO salvar(ClienteRequestDTO dto) {
+
+        Cliente cliente = new Cliente();
+        cliente.setNome(dto.nome());
+        cliente.setTelefone(dto.telefone());
+        cliente.setEmail(dto.email());
+
+        Cliente salvo = repository.save(cliente);
+
+        return ClienteResponseDTO.fromEntity(salvo);
     }
 
     @Transactional
-    public Cliente atualizar(Long id, Cliente dados) {
-        Cliente cliente = buscarPorId(id);
+    public ClienteResponseDTO atualizar(Long id, ClienteRequestDTO dto) {
 
-        if (dados.getNome() != null)
-            cliente.setNome(dados.getNome());
+        Cliente cliente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Cliente não encontrado com o ID: " + id));
 
-        if (dados.getTelefone() != null)
-            cliente.setTelefone(dados.getTelefone());
+        if (dto.nome() != null)
+            cliente.setNome(dto.nome());
 
-        if (dados.getEmail() != null)
-            cliente.setEmail(dados.getEmail());
+        if (dto.telefone() != null)
+            cliente.setTelefone(dto.telefone());
 
-        return repository.save(cliente);
+        if (dto.email() != null)
+            cliente.setEmail(dto.email());
+
+        Cliente atualizado = repository.save(cliente);
+
+        return ClienteResponseDTO.fromEntity(atualizado);
     }
 
     @Transactional
     public void deletar(Long id) {
-        Cliente cliente = buscarPorId(id);
+        Cliente cliente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Cliente não encontrado com o ID: " + id));
+
         repository.delete(cliente);
     }
 }
