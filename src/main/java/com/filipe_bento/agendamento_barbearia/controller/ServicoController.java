@@ -1,6 +1,7 @@
 package com.filipe_bento.agendamento_barbearia.controller;
 
-import com.filipe_bento.agendamento_barbearia.entity.Servico;
+import com.filipe_bento.agendamento_barbearia.dto.servico.ServicoRequestDTO;
+import com.filipe_bento.agendamento_barbearia.dto.servico.ServicoResponseDTO;
 import com.filipe_bento.agendamento_barbearia.service.ServicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,24 +19,24 @@ public class ServicoController {
     private final ServicoService servicoService;
 
     @PostMapping
-    public ResponseEntity<Servico> criarServico(@Valid @RequestBody Servico servico) {
-        Servico novoServico = servicoService.salvar(servico);
+    public ResponseEntity<ServicoResponseDTO> criarServico(@Valid @RequestBody ServicoRequestDTO dto) {
+        ServicoResponseDTO novoServico = servicoService.salvar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoServico);
     }
 
     @GetMapping
-    public ResponseEntity<List<Servico>> listarTodos() {
+    public ResponseEntity<List<ServicoResponseDTO>> listarTodos() {
         return ResponseEntity.ok(servicoService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Servico> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ServicoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(servicoService.buscarPorId(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Servico> atualizarServico(@PathVariable Long id, @Valid @RequestBody Servico servicoAtualizado) {
-        return ResponseEntity.ok(servicoService.atualizar(id, servicoAtualizado));
+    public ResponseEntity<ServicoResponseDTO> atualizarServico(@PathVariable Long id, @Valid @RequestBody ServicoRequestDTO dto) {
+        return ResponseEntity.ok(servicoService.atualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")

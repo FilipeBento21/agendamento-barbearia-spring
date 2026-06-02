@@ -1,6 +1,10 @@
 package com.filipe_bento.agendamento_barbearia.service;
 
+import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoRequestDTO;
+import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoResponseDTO;
 import com.filipe_bento.agendamento_barbearia.entity.Agendamento;
+import com.filipe_bento.agendamento_barbearia.entity.Barbeiro;
+import com.filipe_bento.agendamento_barbearia.entity.Cliente;
 import com.filipe_bento.agendamento_barbearia.entity.Servico;
 import com.filipe_bento.agendamento_barbearia.exception.ResourceNotFoundException;
 import com.filipe_bento.agendamento_barbearia.repository.AgendamentoRepository;
@@ -14,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,63 +30,84 @@ public class AgendamentoService {
     private final ServicoRepository servicoRepository;
 
     @Transactional(readOnly = true)
-    public List<Agendamento> listarTodos() {
-        return agendamentoRepository.findAll();
+    public List<AgendamentoResponseDTO> listarTodos() {
+        return agendamentoRepository.findAll().stream()
+                .map(AgendamentoResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public Agendamento buscarPorId(Long id) {
-        return agendamentoRepository.findById(id)
+    public AgendamentoResponseDTO buscarPorId(Long id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
+        return AgendamentoResponseDTO.fromEntity(agendamento);
     }
 
     @Transactional
-    public Agendamento salvar(Agendamento agendamento) {
-        if (agendamento.getCliente() == null || !clienteRepository.existsById(agendamento.getCliente().getId())) {
-            throw new ResourceNotFoundException("Cliente não encontrado.");
-        }
+    public AgendamentoResponseDTO salvar(AgendamentoRequestDTO dto) {
+        Cliente cliente = clienteRepository.findById(dto.clienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com o ID: " + dto.clienteId()));
 
-        if (agendamento.getBarbeiro() == null || !barbeiroRepository.existsById(agendamento.getBarbeiro().getId())) {
-            throw new ResourceNotFoundException("Barbeiro não encontrado.");
-        }
+        Barbeiro barbeiro = barbeiroRepository.findById(dto.barbeiroId())
+                .orElseThrow(() -> new ResourceNotFoundException("Barbeiro não encontrado com o ID: " + dto.barbeiroId()));
 
         Set<Servico> servicosValidados = new HashSet<>();
-        for (Servico s : agendamento.getServicos()) {
-            Servico servicoBanco = servicoRepository.findById(s.getId())
-                    .orElseThrow(
-                            () -> new ResourceNotFoundException("Serviço com ID " + s.getId() + " não encontrado."));
+        for (Long servicoId : dto.servicosIds()) {
+            Servico servicoBanco = servicoRepository.findById(servicoId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Serviço com ID " + servicoId + " não encontrado."));
             servicosValidados.add(servicoBanco);
         }
 
-        agendamento.setCliente(clienteRepository.findById(agendamento.getCliente().getId()).get());
-        agendamento.setBarbeiro(barbeiroRepository.findById(agendamento.getBarbeiro().getId()).get());
+        Agendamento agendamento = new Agendamento();
+        agendamento.setDataHora(dto.dataHora());
+        agendamento.setCliente(cliente);
+        agendamento.setBarbeiro(barbeiro);
         agendamento.setServicos(servicosValidados);
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+        return AgendamentoResponseDTO.fromEntity(salvo);
     }
 
     @Transactional
     public void deletar(Long id) {
-        Agendamento agendamento = buscarPorId(id);
+        // Usamos o repositório diretamente para lançar a exceção se não existir
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
         agendamentoRepository.delete(agendamento);
     }
 
     @Transactional
-    public Agendamento atualizar(Long id, Agendamento dados) {
-        Agendamento agendamento = buscarPorId(id);
+    public AgendamentoResponseDTO atualizar(Long id, AgendamentoRequestDTO dto) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
 
-        if (dados.getDataHora() != null)
-            agendamento.setDataHora(dados.getDataHora());
+        if (dto.dataHora() != null) {
+            agendamento.setDataHora(dto.dataHora());
+        }
 
-        if (dados.getCliente() != null)
-            agendamento.setCliente(dados.getCliente());
+        if (dto.clienteId() != null) {
+            Cliente cliente = clienteRepository.findById(dto.clienteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com o ID: " + dto.clienteId()));
+            agendamento.setCliente(cliente);
+        }
 
-        if (dados.getBarbeiro() != null)
-            agendamento.setBarbeiro(dados.getBarbeiro());
+        if (dto.barbeiroId() != null) {
+            Barbeiro barbeiro = barbeiroRepository.findById(dto.barbeiroId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Barbeiro não encontrado com o ID: " + dto.barbeiroId()));
+            agendamento.setBarbeiro(barbeiro);
+        }
 
-        if (dados.getServicos() != null)
-            agendamento.setServicos(dados.getServicos());
+        if (dto.servicosIds() != null && !dto.servicosIds().isEmpty()) {
+            Set<Servico> novosServicos = new HashSet<>();
+            for (Long servicoId : dto.servicosIds()) {
+                Servico s = servicoRepository.findById(servicoId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Serviço com ID " + servicoId + " não encontrado."));
+                novosServicos.add(s);
+            }
+            agendamento.setServicos(novosServicos);
+        }
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento atualizado = agendamentoRepository.save(agendamento);
+        return AgendamentoResponseDTO.fromEntity(atualizado);
     }
 }

@@ -1,6 +1,7 @@
 package com.filipe_bento.agendamento_barbearia.controller;
 
-import com.filipe_bento.agendamento_barbearia.entity.Agendamento;
+import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoRequestDTO;
+import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoResponseDTO;
 import com.filipe_bento.agendamento_barbearia.service.AgendamentoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,18 +19,18 @@ public class AgendamentoController {
     private final AgendamentoService agendamentoService;
 
     @PostMapping
-    public ResponseEntity<Agendamento> criarAgendamento(@Valid @RequestBody Agendamento agendamento) {
-        Agendamento novoAgendamento = agendamentoService.salvar(agendamento);
+    public ResponseEntity<AgendamentoResponseDTO> criarAgendamento(@Valid @RequestBody AgendamentoRequestDTO dto) {
+        AgendamentoResponseDTO novoAgendamento = agendamentoService.salvar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoAgendamento);
     }
 
     @GetMapping
-    public ResponseEntity<List<Agendamento>> listarTodos() {
+    public ResponseEntity<List<AgendamentoResponseDTO>> listarTodos() {
         return ResponseEntity.ok(agendamentoService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Agendamento> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<AgendamentoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(agendamentoService.buscarPorId(id));
     }
 
@@ -40,10 +41,9 @@ public class AgendamentoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Agendamento> atualizar(
+    public ResponseEntity<AgendamentoResponseDTO> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody Agendamento agendamento) {
-
-        return ResponseEntity.ok(agendamentoService.atualizar(id, agendamento));
+            @Valid @RequestBody AgendamentoRequestDTO dto) {
+        return ResponseEntity.ok(agendamentoService.atualizar(id, dto));
     }
 }
