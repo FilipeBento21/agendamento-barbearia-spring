@@ -20,19 +20,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class) // Habilita o Mockito puro sem subir o Spring
+@ExtendWith(MockitoExtension.class)
 class ServicoServiceTest {
 
     @Mock
-    private ServicoRepository repository; // Cria o dublê de testes
+    private ServicoRepository repository;
 
     @InjectMocks
-    private ServicoService service; // Injeta o mock acima dentro do service real
+    private ServicoService service;
 
     @Test
     @DisplayName("Deve salvar um serviço com sucesso e retornar o ResponseDTO correspondente")
     void deveSalvarServicoComSucesso() {
-        // ARRANGE
+        
         ServicoRequestDTO requestDTO = new ServicoRequestDTO("Cabelo e Barba", BigDecimal.valueOf(50.0));
         
         Servico servicoSalvo = new Servico();
@@ -40,13 +40,13 @@ class ServicoServiceTest {
         servicoSalvo.setNome("Cabelo e Barba");
         servicoSalvo.setPreco(50.0);
 
-        // Define o comportamento simulado do mock repository
+    
         when(repository.save(any(Servico.class))).thenReturn(servicoSalvo);
 
-        // ACT
+        
         ServicoResponseDTO resultado = service.salvar(requestDTO);
 
-        // ASSERT
+    
         assertThat(resultado).isNotNull();
         assertThat(resultado.id()).isEqualTo(1L);
         assertThat(resultado.nome()).isEqualTo("Cabelo e Barba");
@@ -58,7 +58,7 @@ class ServicoServiceTest {
     @Test
     @DisplayName("Deve buscar serviço por ID com sucesso")
     void deveBuscarPorIdComSucesso() {
-        // ARRANGE
+        
         Long id = 1L;
         Servico servico = new Servico();
         servico.setId(id);
@@ -67,10 +67,10 @@ class ServicoServiceTest {
 
         when(repository.findById(id)).thenReturn(Optional.of(servico));
 
-        // ACT
+        
         ServicoResponseDTO resultado = service.buscarPorId(id);
 
-        // ASSERT
+        
         assertThat(resultado).isNotNull();
         assertThat(resultado.nome()).isEqualTo("Corte");
         verify(repository, times(1)).findById(id);
@@ -79,11 +79,11 @@ class ServicoServiceTest {
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException ao buscar ID inexistente")
     void deveLancarExcecaoAoBuscarIdInexistente() {
-        // ARRANGE
+        
         Long idInexistente = 99L;
         when(repository.findById(idInexistente)).thenReturn(Optional.empty());
 
-        // ACT & ASSERT
+        
         assertThatThrownBy(() -> service.buscarPorId(idInexistente))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Serviço não encontrado com o ID: " + idInexistente);

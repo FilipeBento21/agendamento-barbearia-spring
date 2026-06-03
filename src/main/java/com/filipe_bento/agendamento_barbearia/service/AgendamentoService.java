@@ -70,7 +70,7 @@ public class AgendamentoService {
 
     @Transactional
     public void deletar(Long id) {
-        // Usamos o repositório diretamente para lançar a exceção se não existir
+        
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
         agendamentoRepository.delete(agendamento);
