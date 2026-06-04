@@ -32,7 +32,7 @@ public class Cliente {
     @Column(nullable = false, length = 100, unique = true)
     private String email;
 
-    // RELACIONAMENTO (AGORA NO LUGAR CERTO)
+
     @JsonIgnore
     @OneToMany(mappedBy = "cliente")
     private List<Agendamento> agendamentos = new ArrayList<>();

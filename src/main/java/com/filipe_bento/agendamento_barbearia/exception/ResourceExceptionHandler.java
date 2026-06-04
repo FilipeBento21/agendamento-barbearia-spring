@@ -38,7 +38,7 @@ public class ResourceExceptionHandler {
         err.setMessage("Um ou mais campos estão inválidos. Faça o preenchimento correto.");
         err.setPath(request.getRequestURI());
         
-        // Loop para capturar cada campo específico que falhou na validação
+       
         for (FieldError f : e.getBindingResult().getFieldErrors()) {
             err.addError(f.getField(), f.getDefaultMessage());
         }
