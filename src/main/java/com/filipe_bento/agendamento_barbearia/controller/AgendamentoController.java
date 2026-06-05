@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +39,17 @@ public class AgendamentoController {
     @Operation(summary = "Buscar agendamento por ID", description = "Retorna os detalhes de um agendamento específico baseado no ID informado")
     public ResponseEntity<AgendamentoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(agendamentoService.buscarPorId(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualizar agendamento", description = "Atualiza um agendamento existente")
+    public ResponseEntity<AgendamentoResponseDTO> atualizar(
+            @Parameter(description = "ID do agendamento")
+            @PathVariable Long id,
+
+            @Valid @RequestBody AgendamentoRequestDTO dto) {
+
+        return ResponseEntity.ok(agendamentoService.atualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
