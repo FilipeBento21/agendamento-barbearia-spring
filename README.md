@@ -2,27 +2,26 @@
 
 Projeto desenvolvido para a disciplina de **Programação Cliente-Servidor com Spring Boot (UNIBRA 2026.1)**.
 
-A aplicação consiste em uma **API REST completa** para gerenciamento de uma barbearia, permitindo o cadastro de **clientes, barbeiros, serviços e agendamentos**.
+A aplicação consiste em uma **API REST** para gerenciamento de uma barbearia, permitindo o cadastro de clientes, barbeiros, serviços e agendamentos.
 
 ---
 
-# 🚀 Tecnologias Utilizadas
+## 🚀 Tecnologias Utilizadas
 
 * Java 17+
 * Spring Boot
 * Spring Data JPA
 * Hibernate
 * Maven
-* H2 Database (desenvolvimento)
-* MySQL (produção)
+* H2 / MySQL
 * Swagger (OpenAPI)
 * Lombok
 * Jakarta Validation
-* JaCoCo (cobertura de testes)
+* JaCoCo
 
 ---
 
-# 📁 Estrutura do Projeto
+## 📁 Estrutura do Projeto
 
 ```
 src/main/java/com/filipe_bento/agendamento_barbearia/
@@ -33,14 +32,14 @@ src/main/java/com/filipe_bento/agendamento_barbearia/
 ├── entity/            → Entidades JPA
 ├── dto/               → RequestDTO e ResponseDTO
 ├── exception/         → Tratamento global de erros
-├── config/            → Configurações da aplicação
+├── config/            → Configurações (Swagger, Segurança, etc)
 ```
 
 ---
 
-# 🧠 Arquitetura
+## 🧠 Arquitetura
 
-A aplicação segue o padrão:
+A aplicação segue o padrão **MVC + Service Layer**:
 
 ```
 Controller → DTO → Service → Repository → Banco de Dados
@@ -48,117 +47,183 @@ Controller → DTO → Service → Repository → Banco de Dados
 
 ### 📌 Responsabilidades
 
-* **Controller:** recebe requisições HTTP
-* **DTO:** controla entrada e saída de dados
-* **Service:** regras de negócio
-* **Repository:** acesso ao banco
+* **Controller** → Recebe requisições HTTP
+* **DTO** → Controla entrada e saída de dados
+* **Service** → Contém regras de negócio
+* **Repository** → Comunicação com banco de dados
 
 ---
 
-# 📅 Fluxo de Agendamento
+## 🔐 Segurança da Informação Aplicada
 
-1. Recebe um `AgendamentoRequestDTO`
-2. Busca Cliente, Barbeiro e Serviços
-3. Valida existência
-4. Monta o objeto
-5. Salva no banco
+O projeto implementa diversas boas práticas de segurança recomendadas para APIs REST:
 
----
+### 🧱 Padrão DTO (Data Transfer Object)
 
-# 🧠 Regras de Negócio
+Evita:
 
-## 👤 Validação de Existência
-
-* Cliente, Barbeiro e Serviço devem existir
-
-## 📅 Agendamento válido
-
-* Não permite dados inexistentes
-
-## 🔗 Relacionamentos
-
-* 1 Cliente
-* 1 Barbeiro
-* 1 ou mais Serviços
-
-## 📧 Email único
-
-* Não permite duplicidade de cliente
-
-## 🧾 Validação de dados
-
-* Nome obrigatório
-* Email válido
-
-## 🔄 Atualização segura
-
-* Só atualiza se existir
-
-## ❌ Exclusão segura
-
-* Só remove se existir
+* Mass Assignment
+* Over-Posting
+  Garante que entidades não sejam expostas diretamente.
 
 ---
 
-# ⚠️ Tratamento de Erros
+### 🛡️ Validação de Entrada (Jakarta Validation)
 
-Utiliza `@ControllerAdvice`
+Uso de:
 
-### 🔴 404
+* `@NotBlank`
+* `@NotNull`
+* `@Size`
+
+Previne:
+
+* Dados inválidos
+* Injeções
+* Erros de integridade
+
+---
+
+### 🚫 Ocultação de Stack Trace
+
+Uso de:
+
+* `GlobalExceptionHandler`
+* `ResourceExceptionHandler`
+
+Evita exposição de:
+
+* Estrutura interna
+* Dados sensíveis
+* Erros do servidor
+
+---
+
+### 🧼 Sanitização de Payloads
+
+Tratamento de:
+
+* `HttpMessageNotReadableException`
+
+Protege contra:
+
+* JSON inválido
+* Quebra do parser
+* Dados maliciosos
+
+---
+
+### 🔐 Spring Security
+
+Proteção inicial com:
+
+* Autenticação em memória
+
+---
+
+### 🚀 Melhorias Futuras de Segurança
+
+* JWT (JSON Web Token)
+* Controle de acesso por roles
+* Logs de auditoria
+* Criptografia
+
+---
+
+## 🔄 Regras de Negócio
+
+* Cliente deve possuir **nome, email e telefone válidos**
+* Email do cliente deve ser **único**
+* Agendamento deve possuir:
+
+  * Cliente existente
+  * Barbeiro existente
+  * Pelo menos 1 serviço
+* Serviços possuem preço obrigatório
+* Barbeiros podem ter especialidade
+
+---
+
+## ⚠️ Tratamento de Erros
+
+### 🔴 404 - Recurso não encontrado
 
 ```json
 {
   "status": 404,
-  "message": "Recurso não encontrado"
+  "error": "Recurso não encontrado",
+  "message": "Cliente não encontrado com o ID: 1",
+  "path": "/api/v1/clientes/1"
 }
 ```
 
-### 🟡 400
+### 🟡 400 - Erro de validação
 
 ```json
 {
   "status": 400,
-  "message": "Erro de validação"
+  "error": "Erro de validação",
+  "message": "Um ou mais campos estão inválidos.",
+  "errors": [
+    {
+      "fieldName": "nome",
+      "message": "Nome é obrigatório"
+    }
+  ]
 }
 ```
 
 ---
 
-# 📌 Endpoints
+## 📌 Endpoints Principais
 
-## 👤 Clientes
+### 👤 Clientes
 
-* GET /api/v1/clientes
-* GET /api/v1/clientes/{id}
-* GET /api/v1/clientes/busca
-* POST /api/v1/clientes
-* PUT /api/v1/clientes/{id}
-* DELETE /api/v1/clientes/{id}
-
-## ✂️ Barbeiros
-
-* GET /api/v1/barbeiros
-* POST /api/v1/barbeiros
-* PUT /api/v1/barbeiros/{id}
-* DELETE /api/v1/barbeiros/{id}
-
-## 💇 Serviços
-
-* GET /api/v1/servicos
-* POST /api/v1/servicos
-* PUT /api/v1/servicos/{id}
-* DELETE /api/v1/servicos/{id}
-
-## 📅 Agendamentos
-
-* GET /api/v1/agendamentos
-* POST /api/v1/agendamentos
-* PUT /api/v1/agendamentos/{id}
-* DELETE /api/v1/agendamentos/{id}
+| Método | Endpoint                     | Descrição       |
+| ------ | ---------------------------- | --------------- |
+| GET    | /api/v1/clientes             | Listar          |
+| GET    | /api/v1/clientes/{id}        | Buscar por ID   |
+| GET    | /api/v1/clientes/busca?nome= | Buscar por nome |
+| POST   | /api/v1/clientes             | Criar           |
+| PUT    | /api/v1/clientes/{id}        | Atualizar       |
+| DELETE | /api/v1/clientes/{id}        | Remover         |
 
 ---
 
-# 📥 Exemplos
+### ✂️ Barbeiros
+
+| Método | Endpoint               |
+| ------ | ---------------------- |
+| GET    | /api/v1/barbeiros      |
+| POST   | /api/v1/barbeiros      |
+| PUT    | /api/v1/barbeiros/{id} |
+| DELETE | /api/v1/barbeiros/{id} |
+
+---
+
+### 💇 Serviços
+
+| Método | Endpoint              |
+| ------ | --------------------- |
+| GET    | /api/v1/servicos      |
+| POST   | /api/v1/servicos      |
+| PUT    | /api/v1/servicos/{id} |
+| DELETE | /api/v1/servicos/{id} |
+
+---
+
+### 📅 Agendamentos
+
+| Método | Endpoint                  |
+| ------ | ------------------------- |
+| GET    | /api/v1/agendamentos      |
+| POST   | /api/v1/agendamentos      |
+| PUT    | /api/v1/agendamentos/{id} |
+| DELETE | /api/v1/agendamentos/{id} |
+
+---
+
+## 📥 Exemplos de Requisição
 
 ### Criar Cliente
 
@@ -174,15 +239,15 @@ curl -X POST http://localhost:8080/api/v1/clientes \
 
 ---
 
-# 🧪 Testes
+## 🧪 Testes
 
-### Estrutura
+Estratégia baseada na **Pirâmide de Testes**:
 
 * Repository → `@DataJpaTest`
 * Service → Mockito
 * Controller → `@WebMvcTest`
 
-### Executar
+### ▶️ Executar testes
 
 ```bash
 ./mvnw test
@@ -190,29 +255,25 @@ curl -X POST http://localhost:8080/api/v1/clientes \
 
 ---
 
-# 📊 Cobertura de Código (JaCoCo)
+## 📊 Cobertura de Código (JaCoCo)
 
-Relatório:
+### ▶️ Gerar relatório
+
+```bash
+./mvnw clean verify
+```
+
+### 📂 Acessar relatório
 
 ```
 target/site/jacoco/index.html
 ```
 
-### Resultados
-
-* Cobertura: **83%**
-* Branches: **86%**
-
-### Análise
-
-* Service: ~94%
-* Controller: 100%
-* DTO: 100%
-* Exception: ~34%
+🎯 Meta: **≥ 70%**
 
 ---
 
-# 📘 Swagger
+## 📘 Documentação Swagger
 
 Acesse:
 
@@ -220,58 +281,67 @@ Acesse:
 http://localhost:8080/swagger-ui.html
 ```
 
-Permite testar todos os endpoints.
+Permite:
+
+* Visualizar endpoints
+* Testar API diretamente
+* Ver contratos de requisição/resposta
 
 ---
 
-# ⚙️ Como Rodar
+## ⚙️ Como Rodar o Projeto
+
+### 1. Clonar repositório
 
 ```bash
 git clone <URL>
-cd projeto
+```
+
+### 2. Configurar banco
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/barbearia
+spring.datasource.username=root
+spring.datasource.password=123456
+```
+
+### 3. Rodar aplicação
+
+```bash
 ./mvnw spring-boot:run
 ```
 
 ---
 
-# 📌 Diferenciais
-
-* Arquitetura em camadas
-* Uso de DTOs
-* Tratamento global de erros
-* Testes automatizados
-* JaCoCo
-* Swagger
-
----
-
-# 👨‍💻 Autores
+## 👨‍💻 Autores
 
 * Filipe Bento
 * Hytalo Leão
 
 ---
 
-# 🎯 Status
+## 🎯 Status do Projeto
 
 ✔ CRUD completo
-✔ DTOs
-✔ Testes
-✔ Swagger
-✔ Pronto para apresentação
+✔ DTOs implementados
+✔ Validações
+✔ Tratamento de erros
+✔ Swagger documentado
+✔ Testes implementados
+✔ Segurança básica aplicada
 
 ---
 
-# 🚀 Melhorias Futuras
+## 🚀 Próximas Melhorias
 
-* Validação de horários
-* Disponibilidade de barbeiro
-* Autenticação (JWT)
+* Regras avançadas de agendamento (horários)
+* Autenticação com JWT
 * Paginação
+* Logs estruturados
 * Deploy em nuvem
 
 ---
 
-# 📌 Conclusão
+## 📌 Conclusão
 
-A API foi desenvolvida seguindo boas práticas de arquitetura, garantindo organização, segurança e escalabilidade, estando preparada para evolução e uso em cenários reais.
+O projeto implementa uma API REST completa, seguindo boas práticas de arquitetura, segurança e organização de código, estando preparado para evolução e uso em cenários reais.
