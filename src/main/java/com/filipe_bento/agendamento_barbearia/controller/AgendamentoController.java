@@ -4,7 +4,8 @@ import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoRequest
 import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoResponseDTO;
 import com.filipe_bento.agendamento_barbearia.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag; 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -57,13 +58,5 @@ public class AgendamentoController {
     public ResponseEntity<Void> deletarAgendamento(@PathVariable Long id) {
         agendamentoService.deletar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "Atualizar um agendamento", description = "Atualiza os dados de um agendamento existente baseado no ID")
-    public ResponseEntity<AgendamentoResponseDTO> atualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody AgendamentoRequestDTO dto) {
-        return ResponseEntity.ok(agendamentoService.atualizar(id, dto));
     }
 }
