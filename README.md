@@ -1,90 +1,79 @@
-# 💈 API de Agendamento de Barbearia
+💈 API de Agendamento de Barbearia
 
-Projeto desenvolvido para a disciplina de **Programação Cliente-Servidor com Spring Boot (UNIBRA 2026.1)**.
+Projeto desenvolvido para a disciplina de Programação Cliente-Servidor com Spring Boot (UNIBRA 2026.1).
 
-A aplicação consiste em uma API REST para gerenciamento de uma barbearia, permitindo o cadastro de clientes, barbeiros, serviços e agendamentos.
+A aplicação consiste em uma API REST completa para gerenciamento de uma barbearia, permitindo o cadastro de clientes, barbeiros, serviços e agendamentos.
 
----
-
-# 🚀 Tecnologias Utilizadas
-
-* Java 17+
-* Spring Boot
-* Spring Data JPA
-* Hibernate
-* Maven
-* MySQL
-* Swagger (OpenAPI)
-* Lombok
-* Jakarta Validation
-
----
-
-# 📁 Estrutura do Projeto
-
-```
+🚀 Tecnologias Utilizadas
+Java 17+
+Spring Boot
+Spring Data JPA
+Hibernate
+Maven
+H2 Database (desenvolvimento)
+MySQL (produção)
+Swagger (OpenAPI)
+Lombok
+Jakarta Validation
+JaCoCo (cobertura de testes)
+📁 Estrutura do Projeto
 src/main/java/com/filipe_bento/agendamento_barbearia/
-│
+
 ├── controller/        → Camada REST (entrada/saída HTTP)
 ├── service/           → Regras de negócio
 ├── repository/        → Acesso ao banco de dados
 ├── entity/            → Entidades JPA
 ├── dto/               → RequestDTO e ResponseDTO
 ├── exception/         → Tratamento global de erros
-```
+├── config/            → Configurações da aplicação
+🧠 Arquitetura
 
----
+A aplicação segue o padrão MVC + Service Layer:
 
-# 🧠 Arquitetura
-
-A aplicação segue o padrão **MVC + Service Layer**:
-
-```
 Controller → DTO → Service → Repository → Banco de Dados
-```
+📌 Responsabilidades:
+Controller: recebe requisições HTTP
+DTO: controla entrada e saída de dados
+Service: contém regras de negócio
+Repository: comunicação com banco
+📅 Fluxo de Agendamento
 
-* **Controller**: recebe requisições HTTP
-* **Service**: contém regras de negócio
-* **Repository**: comunica com o banco
-* **DTO**: controla entrada e saída de dados
+Ao criar um agendamento:
 
----
-
-# 🔐 Uso de DTOs
+A API recebe um AgendamentoRequestDTO
+O Service busca:
+Cliente
+Barbeiro
+Serviços
+Valida se os dados existem
+Monta o objeto Agendamento
+Persiste no banco
+🔗 Relacionamentos:
+Cliente → ManyToOne
+Barbeiro → ManyToOne
+Serviços → ManyToMany
+🔐 Uso de DTOs
 
 Os DTOs foram utilizados para evitar:
 
-* Exposição de entidades diretamente
-* Vazamento de dados sensíveis
-* Acoplamento entre API e banco
+Exposição direta das entidades
+Vazamento de dados sensíveis
+Acoplamento entre API e banco
+Tipos:
+RequestDTO: entrada de dados
+ResponseDTO: saída de dados
+⚠️ Tratamento de Erros
 
-### Tipos utilizados:
+A API possui tratamento global com @ControllerAdvice.
 
-* **RequestDTO** → Entrada de dados
-* **ResponseDTO** → Saída de dados
-
----
-
-# ⚠️ Tratamento de Erros
-
-A API possui tratamento global com `@ControllerAdvice`.
-
-## Tipos de erro:
-
-### 🔴 404 - Recurso não encontrado
-
-```json
+🔴 404 - Recurso não encontrado
 {
   "status": 404,
   "error": "Recurso não encontrado",
   "message": "Cliente não encontrado com o ID: 1",
   "path": "/api/v1/clientes/1"
 }
-```
-
-### 🟡 400 - Erro de validação
-
-```json
+🟡 400 - Erro de validação
 {
   "status": 400,
   "error": "Erro de validação",
@@ -96,62 +85,39 @@ A API possui tratamento global com `@ControllerAdvice`.
     }
   ]
 }
-```
-
----
-
-# 📌 Endpoints Principais
-
-## 👤 Clientes
-
-| Método | Endpoint                     | Descrição         |
-| ------ | ---------------------------- | ----------------- |
-| GET    | /api/v1/clientes             | Listar todos      |
-| GET    | /api/v1/clientes/{id}        | Buscar por ID     |
-| GET    | /api/v1/clientes/busca?nome= | Buscar por nome   |
-| POST   | /api/v1/clientes             | Criar cliente     |
-| PUT    | /api/v1/clientes/{id}        | Atualizar cliente |
-| DELETE | /api/v1/clientes/{id}        | Remover cliente   |
-
----
-
-## ✂️ Barbeiros
-
-| Método | Endpoint               |
-| ------ | ---------------------- |
-| GET    | /api/v1/barbeiros      |
-| POST   | /api/v1/barbeiros      |
-| PUT    | /api/v1/barbeiros/{id} |
-| DELETE | /api/v1/barbeiros/{id} |
-
----
-
-## 💇 Serviços
-
-| Método | Endpoint              |
-| ------ | --------------------- |
-| GET    | /api/v1/servicos      |
-| POST   | /api/v1/servicos      |
-| PUT    | /api/v1/servicos/{id} |
-| DELETE | /api/v1/servicos/{id} |
-
----
-
-## 📅 Agendamentos
-
-| Método | Endpoint                  |
-| ------ | ------------------------- |
-| GET    | /api/v1/agendamentos      |
-| POST   | /api/v1/agendamentos      |
-| DELETE | /api/v1/agendamentos/{id} |
-
----
-
-# 📥 Exemplos de Requisição
-
-## 🔹 Criar Cliente
-
-```bash
+📌 Endpoints Principais
+👤 Clientes
+Método	Endpoint	Descrição
+GET	/api/v1/clientes	Listar todos
+GET	/api/v1/clientes/{id}	Buscar por ID
+GET	/api/v1/clientes/busca?nome=	Buscar por nome
+POST	/api/v1/clientes	Criar cliente
+PUT	/api/v1/clientes/{id}	Atualizar
+DELETE	/api/v1/clientes/{id}	Remover
+✂️ Barbeiros
+Método	Endpoint
+GET	/api/v1/barbeiros
+GET	/api/v1/barbeiros/{id}
+GET	/api/v1/barbeiros/busca
+POST	/api/v1/barbeiros
+PUT	/api/v1/barbeiros/{id}
+DELETE	/api/v1/barbeiros/{id}
+💇 Serviços
+Método	Endpoint
+GET	/api/v1/servicos
+GET	/api/v1/servicos/{id}
+POST	/api/v1/servicos
+PUT	/api/v1/servicos/{id}
+DELETE	/api/v1/servicos/{id}
+📅 Agendamentos
+Método	Endpoint
+GET	/api/v1/agendamentos
+GET	/api/v1/agendamentos/{id}
+POST	/api/v1/agendamentos
+PUT	/api/v1/agendamentos/{id}
+DELETE	/api/v1/agendamentos/{id}
+📥 Exemplos de Requisição
+🔹 Criar Cliente
 curl -X POST http://localhost:8080/api/v1/clientes \
 -H "Content-Type: application/json" \
 -d '{
@@ -159,38 +125,7 @@ curl -X POST http://localhost:8080/api/v1/clientes \
   "telefone": "99999-9999",
   "email": "filipe@email.com"
 }'
-```
-
----
-
-## 🔹 Criar Barbeiro
-
-```bash
-curl -X POST http://localhost:8080/api/v1/barbeiros \
--H "Content-Type: application/json" \
--d '{
-  "nome": "Carlos"
-}'
-```
-
----
-
-## 🔹 Criar Serviço
-
-```bash
-curl -X POST http://localhost:8080/api/v1/servicos \
--H "Content-Type: application/json" \
--d '{
-  "nome": "Corte",
-  "preco": 30.00
-}'
-```
-
----
-
-## 🔹 Criar Agendamento
-
-```bash
+🔹 Criar Agendamento
 curl -X POST http://localhost:8080/api/v1/agendamentos \
 -H "Content-Type: application/json" \
 -d '{
@@ -198,102 +133,109 @@ curl -X POST http://localhost:8080/api/v1/agendamentos \
   "barbeiro": { "id": 1 },
   "servicos": [{ "id": 1 }]
 }'
-```
+🗄️ Banco de Dados
+Desenvolvimento:
+H2 Database (em memória)
 
----
+✔ Não precisa instalação
+✔ Ideal para testes
+✔ Reinicia a cada execução
 
-# 🧪 Testes
+Produção:
+MySQL
+🧪 Testes
 
 O projeto segue a pirâmide de testes:
 
-* **Repository** → @DataJpaTest
-* **Service** → Mockito
-* **Controller** → @WebMvcTest
+🔹 Repository (@DataJpaTest)
 
-Para rodar:
+Testa persistência no banco H2
 
-```bash
+Exemplos:
+
+Salvar entidade
+Buscar por ID
+Consultas customizadas
+🔹 Service (Mockito)
+
+Testa regras de negócio isoladas
+
+Exemplos:
+
+Validação de entidade inexistente
+Atualização de dados
+🔹 Controller (@WebMvcTest)
+
+Testa endpoints HTTP
+
+Exemplos:
+
+POST retorna 201
+GET retorna lista
+Erro 404
+▶️ Executar testes
 ./mvnw test
-```
+📊 Cobertura de Código (JaCoCo)
 
----
+Relatório gerado em:
 
-# 📊 Cobertura de Código
-
-Relatório gerado com JaCoCo:
-
-```
 target/site/jacoco/index.html
-```
+📈 Resultados:
+Cobertura de Instruções: 83%
+Cobertura de Branches: 86%
+📌 Análise:
 
-Meta: **≥ 70%**
+✔ Service: ~94%
+✔ Controller: 100%
+✔ DTO/Config: 100%
+⚠️ Exception: ~34%
 
----
+🎯 Conclusão
 
-# 📘 Documentação Swagger
+A cobertura supera a meta de 70%, garantindo boa validação das funcionalidades principais.
+
+📘 Documentação Swagger
 
 Acesse:
 
-```
 http://localhost:8080/swagger-ui.html
-```
+Permite:
 
-Permite testar todos os endpoints diretamente pelo navegador.
+✔ Visualizar endpoints
+✔ Testar requisições
+✔ Ver exemplos
 
----
-
-# ⚙️ Como Rodar o Projeto
-
-### 1. Clonar o repositório
-
-```bash
+⚙️ Como Rodar o Projeto
+1. Clonar
 git clone <URL_DO_REPOSITORIO>
-```
-
-### 2. Configurar banco de dados no application.properties
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/barbearia
-spring.datasource.username=root
-spring.datasource.password=123456
-```
-
-### 3. Rodar aplicação
-
-```bash
+2. Rodar
 ./mvnw spring-boot:run
-```
+📌 Diferenciais do Projeto
 
----
+✔ Uso de DTOs
+✔ Tratamento global de exceções
+✔ Swagger
+✔ Testes automatizados
+✔ JaCoCo
+✔ Arquitetura em camadas
 
-# 👨‍💻 Autores
-
-* Filipe Bento
-* Hytalo Leão
-
----
-
-# 🎯 Status do Projeto
+👨‍💻 Autores
+Filipe Bento
+Hytalo Leão
+🎯 Status
 
 ✔ CRUD completo
 ✔ Validações
-✔ Tratamento de erros
-✔ DTOs implementados
-✔ API documentada
-✔ Pronto para testes e apresentação
+✔ DTOs
+✔ Testes
+✔ Swagger
+✔ Pronto para apresentação
 
----
+🚀 Próximas Melhorias
+Regras de horário
+Autenticação (JWT)
+Paginação
+Deploy em nuvem
+📌 Conclusão
 
-# 🚀 Próximas Melhorias
-
-* Regras de negócio para agendamento (horários, disponibilidade)
-* Autenticação (Spring Security + JWT)
-* Paginação
-* Logs estruturados
-* Deploy em nuvem
-
----
-
-# 📌 Conclusão
-
-O projeto implementa uma API REST completa seguindo boas práticas de arquitetura, separação de responsabilidades e validação de dados, estando preparado para evolução e uso em cenários reais.
+A API foi desenvolvida seguindo boas práticas de arquitetura, separação de responsabilidades e validação de dados, estando preparada para evolução e uso em cenários reais.
