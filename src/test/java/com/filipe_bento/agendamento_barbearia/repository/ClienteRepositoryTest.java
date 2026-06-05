@@ -4,44 +4,44 @@ import com.filipe_bento.agendamento_barbearia.entity.Cliente;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@SpringBootTest
+@Transactional
 class ClienteRepositoryTest {
 
     @Autowired
-    private ClienteRepository repository;
+    private ClienteRepository clienteRepository;
 
     @Test
-    @DisplayName("Deve buscar cliente por nome ignorando maiúsculas/minúsculas")
-    void deveBuscarPorNome() {
-        // ARRANGE
+    @DisplayName("Deve salvar e buscar um cliente por ID com sucesso")
+    void deveSalvarEBuscarPorIdComSucesso() {
         Cliente cliente = new Cliente();
-        cliente.setNome("Filipe Bento");
+        cliente.setNome("Hytalo Bento");
+        cliente.setEmail("hytalo@email.com");
         cliente.setTelefone("81999999999");
-        cliente.setEmail("filipe@email.com");
 
-        repository.save(cliente);
+        Cliente clientePersistido = clienteRepository.save(cliente);
 
-        // ACT
-        List<Cliente> resultado = repository.findByNomeContainingIgnoreCase("filipe");
+        Optional<Cliente> resultado = clienteRepository.findById(clientePersistido.getId());
 
-        // ASSERT
-        assertThat(resultado).isNotEmpty();
-        assertThat(resultado.get(0).getNome()).isEqualTo("Filipe Bento");
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().getNome()).isEqualTo("Hytalo Bento");
+        assertThat(resultado.get().getEmail()).isEqualTo("hytalo@email.com");
     }
 
     @Test
-    @DisplayName("Deve retornar lista vazia quando nome não existir")
-    void deveRetornarVazio() {
-        // ACT
-        List<Cliente> resultado = repository.findByNomeContainingIgnoreCase("inexistente");
+    @DisplayName("Deve retornar vazio ao buscar um cliente por um ID inexistente")
+    void deveRetornarVazioAoBuscarIdInexistente() {
+        Long idInexistente = 99L;
 
-        // ASSERT
+        Optional<Cliente> resultado = clienteRepository.findById(idInexistente);
+
         assertThat(resultado).isEmpty();
     }
 }

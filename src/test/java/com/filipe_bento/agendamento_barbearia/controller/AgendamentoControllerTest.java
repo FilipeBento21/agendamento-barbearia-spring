@@ -3,141 +3,143 @@ package com.filipe_bento.agendamento_barbearia.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoRequestDTO;
 import com.filipe_bento.agendamento_barbearia.dto.agendamento.AgendamentoResponseDTO;
+import com.filipe_bento.agendamento_barbearia.dto.barbeiro.BarbeiroResponseDTO;
+import com.filipe_bento.agendamento_barbearia.dto.cliente.ClienteResponseDTO;
 import com.filipe_bento.agendamento_barbearia.exception.ResourceNotFoundException;
 import com.filipe_bento.agendamento_barbearia.service.AgendamentoService;
+import com.filipe_bento.config.TestSecurityConfig;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AgendamentoController.class)
+@Import(TestSecurityConfig.class)
 class AgendamentoControllerTest {
 
     @Autowired
-    private MockMvc mvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper om;
+    private ObjectMapper objectMapper;
 
-    @MockBean
-    private AgendamentoService service;
+    @MockitoBean
+    private AgendamentoService agendamentoService;
 
-    // 🔹 GET LISTA
-    @Test
-    @DisplayName("Deve retornar 200 ao listar agendamentos")
-    void deveListar() throws Exception {
-        when(service.listarTodos()).thenReturn(List.of());
+    // ── Helpers reutilizáveis ──────────────────────────────────────────────────
 
-        mvc.perform(get("/api/v1/agendamentos"))
-                .andExpect(status().isOk());
+    private ClienteResponseDTO clienteFake() {
+        return new ClienteResponseDTO(1L, "Nome", "123", "a@a.com");
     }
 
-    // 🔹 GET POR ID
-    @Test
-    @DisplayName("Deve retornar 200 ao buscar por ID")
-    void deveBuscarPorId() throws Exception {
-        AgendamentoResponseDTO response = mockResponse();
-
-        when(service.buscarPorId(1L)).thenReturn(response);
-
-        mvc.perform(get("/api/v1/agendamentos/1"))
-                .andExpect(status().isOk());
+    private BarbeiroResponseDTO barbeiroFake() {
+        return new BarbeiroResponseDTO(1L, "Nome", null);
     }
 
-    // 🔹 GET 404
-    @Test
-    @DisplayName("Deve retornar 404 quando não existir")
-    void deveRetornar404() throws Exception {
-        when(service.buscarPorId(99L))
-                .thenThrow(new ResourceNotFoundException("Agendamento não encontrado"));
+    private AgendamentoResponseDTO responseFake(LocalDateTime data) {
+        return new AgendamentoResponseDTO(1L, data, clienteFake(), barbeiroFake(), Set.of());
+    }
 
-        mvc.perform(get("/api/v1/agendamentos/99"))
+    // ── GET /api/v1/agendamentos ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/v1/agendamentos -> Deve retornar 200 OK")
+    void deveRetornar200AoListarAgendamentos() throws Exception {
+        when(agendamentoService.listarTodos()).thenReturn(List.of(responseFake(LocalDateTime.now())));
+
+        mockMvc.perform(get("/api/v1/agendamentos").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
+
+    // ── GET /api/v1/agendamentos/{id} ─────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/v1/agendamentos/{id} -> Deve retornar 200 quando encontrado")
+    void deveRetornar200AoBuscarPorId() throws Exception {
+        when(agendamentoService.buscarPorId(1L)).thenReturn(responseFake(LocalDateTime.now()));
+
+        mockMvc.perform(get("/api/v1/agendamentos/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/agendamentos/{id} -> Deve retornar 404 quando não encontrado")
+    void deveRetornar404AoBuscarIdInexistente() throws Exception {
+        when(agendamentoService.buscarPorId(99L)).thenThrow(new ResourceNotFoundException("Não encontrado"));
+
+        mockMvc.perform(get("/api/v1/agendamentos/99").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 
-    // 🔹 POST válido
+    // ── POST /api/v1/agendamentos ─────────────────────────────────────────────
+
     @Test
-    @DisplayName("Deve retornar 201 ao criar agendamento")
-    void deveCriar() throws Exception {
-        AgendamentoRequestDTO request = new AgendamentoRequestDTO(
-                LocalDateTime.now().plusDays(1),
-                1L,
-                1L,
-                Set.of(1L)
-        );
+    @DisplayName("POST /api/v1/agendamentos -> Deve retornar 201 Created")
+    void deveRetornar201AoCriarAgendamento() throws Exception {
+        LocalDateTime dataFutura = LocalDateTime.now().plusDays(1);
+        AgendamentoRequestDTO request = new AgendamentoRequestDTO(dataFutura, 1L, 1L, Set.of(1L));
 
-        when(service.salvar(any())).thenReturn(mockResponse());
+        when(agendamentoService.salvar(any(AgendamentoRequestDTO.class))).thenReturn(responseFake(dataFutura));
 
-        mvc.perform(post("/api/v1/agendamentos")
+        mockMvc.perform(post("/api/v1/agendamentos")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
     }
 
-    // 🔹 POST inválido (data no passado)
     @Test
-    @DisplayName("Deve retornar 400 para data inválida")
-    void deveRetornar400() throws Exception {
-        AgendamentoRequestDTO request = new AgendamentoRequestDTO(
-                LocalDateTime.now().minusDays(1), // inválido
-                null,
-                null,
-                Set.of()
-        );
-
-        mvc.perform(post("/api/v1/agendamentos")
+    @DisplayName("POST /api/v1/agendamentos -> Deve retornar 400 com body inválido")
+    void deveRetornar400ComBodyInvalido() throws Exception {
+        mockMvc.perform(post("/api/v1/agendamentos")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(request)))
+                        .content("{}"))
                 .andExpect(status().isBadRequest());
     }
 
-    // 🔹 PUT
+    // ── PUT /api/v1/agendamentos/{id} ─────────────────────────────────────────
+
     @Test
-    @DisplayName("Deve retornar 200 ao atualizar agendamento")
-    void deveAtualizar() throws Exception {
-        AgendamentoRequestDTO request = new AgendamentoRequestDTO(
-                LocalDateTime.now().plusDays(2),
-                1L,
-                1L,
-                Set.of(1L)
-        );
+    @DisplayName("PUT /api/v1/agendamentos/{id} -> Deve retornar 200 ao atualizar")
+    void deveRetornar200AoAtualizarAgendamento() throws Exception {
+        LocalDateTime dataFutura = LocalDateTime.now().plusDays(1);
+        AgendamentoRequestDTO request = new AgendamentoRequestDTO(dataFutura, 1L, 1L, Set.of(1L));
 
-        when(service.atualizar(any(Long.class), any())).thenReturn(mockResponse());
+        when(agendamentoService.atualizar(eq(1L), any(AgendamentoRequestDTO.class)))
+                .thenReturn(responseFake(dataFutura));
 
-        mvc.perform(put("/api/v1/agendamentos/1")
+        mockMvc.perform(put("/api/v1/agendamentos/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
-    // 🔹 DELETE
+    // ── DELETE /api/v1/agendamentos/{id} ──────────────────────────────────────
+
     @Test
-    @DisplayName("Deve retornar 204 ao deletar agendamento")
-    void deveDeletar() throws Exception {
-        mvc.perform(delete("/api/v1/agendamentos/1"))
-                .andExpect(status().isNoContent());
-    }
+    @DisplayName("DELETE /api/v1/agendamentos/{id} -> Deve retornar 204 No Content")
+    void deveRetornar204AoDeletar() throws Exception {
+        doNothing().when(agendamentoService).deletar(1L);
 
-    // 🔹 Mock helper
-    private AgendamentoResponseDTO mockResponse() {
-        return new AgendamentoResponseDTO(
-                1L,
-                LocalDateTime.now().plusDays(1),
-                null,
-                null,
-                Set.of()
-        );
+        mockMvc.perform(delete("/api/v1/agendamentos/1"))
+                .andExpect(status().isNoContent());
     }
 }

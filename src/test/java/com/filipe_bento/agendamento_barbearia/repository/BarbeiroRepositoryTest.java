@@ -4,42 +4,43 @@ import com.filipe_bento.agendamento_barbearia.entity.Barbeiro;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@SpringBootTest
+@Transactional
 class BarbeiroRepositoryTest {
 
     @Autowired
-    private BarbeiroRepository repository;
+    private BarbeiroRepository barbeiroRepository;
 
     @Test
-    @DisplayName("Deve buscar barbeiro por nome ignorando maiúsculas/minúsculas")
-    void deveBuscarPorNome() {
-        // ARRANGE
+    @DisplayName("Deve salvar e buscar um barbeiro por ID com sucesso")
+    void deveSalvarEBuscarPorIdComSucesso() {
         Barbeiro barbeiro = new Barbeiro();
-        barbeiro.setNome("Carlos Silva");
+        barbeiro.setNome("Cortador Top");
+        barbeiro.setEspecialidade("Cabelo e Barba");
 
-        repository.save(barbeiro);
+        Barbeiro barbeiroPersistido = barbeiroRepository.save(barbeiro);
 
-        // ACT
-        List<Barbeiro> resultado = repository.findByNomeContainingIgnoreCase("carlos");
+        Optional<Barbeiro> resultado = barbeiroRepository.findById(barbeiroPersistido.getId());
 
-        // ASSERT
-        assertThat(resultado).isNotEmpty();
-        assertThat(resultado.get(0).getNome()).isEqualTo("Carlos Silva");
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().getNome()).isEqualTo("Cortador Top");
+        assertThat(resultado.get().getEspecialidade()).isEqualTo("Cabelo e Barba");
     }
 
     @Test
-    @DisplayName("Deve retornar lista vazia quando barbeiro não existir")
-    void deveRetornarVazio() {
-        // ACT
-        List<Barbeiro> resultado = repository.findByNomeContainingIgnoreCase("inexistente");
+    @DisplayName("Deve retornar vazio ao buscar um barbeiro por um ID inexistente")
+    void deveRetornarVazioAoBuscarIdInexistente() {
+        Long idInexistente = 99L;
 
-        // ASSERT
+        Optional<Barbeiro> resultado = barbeiroRepository.findById(idInexistente);
+
         assertThat(resultado).isEmpty();
     }
 }

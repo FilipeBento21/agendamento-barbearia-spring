@@ -6,6 +6,7 @@ import com.filipe_bento.agendamento_barbearia.entity.Agendamento;
 import com.filipe_bento.agendamento_barbearia.entity.Barbeiro;
 import com.filipe_bento.agendamento_barbearia.entity.Cliente;
 import com.filipe_bento.agendamento_barbearia.entity.Servico;
+import com.filipe_bento.agendamento_barbearia.exception.AgendamentoConflitoException;
 import com.filipe_bento.agendamento_barbearia.exception.ResourceNotFoundException;
 import com.filipe_bento.agendamento_barbearia.repository.AgendamentoRepository;
 import com.filipe_bento.agendamento_barbearia.repository.BarbeiroRepository;
@@ -51,6 +52,11 @@ public class AgendamentoService {
         Barbeiro barbeiro = barbeiroRepository.findById(dto.barbeiroId())
                 .orElseThrow(() -> new ResourceNotFoundException("Barbeiro não encontrado com o ID: " + dto.barbeiroId()));
 
+        if (agendamentoRepository.existsByBarbeiroIdAndDataHora(dto.barbeiroId(), dto.dataHora())) {
+            throw new AgendamentoConflitoException(
+                "Barbeiro já possui agendamento neste horário: " + dto.dataHora());
+        }
+
         Set<Servico> servicosValidados = new HashSet<>();
         for (Long servicoId : dto.servicosIds()) {
             Servico servicoBanco = servicoRepository.findById(servicoId)
@@ -70,7 +76,6 @@ public class AgendamentoService {
 
     @Transactional
     public void deletar(Long id) {
-        
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
         agendamentoRepository.delete(agendamento);
@@ -82,6 +87,10 @@ public class AgendamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado com o ID: " + id));
 
         if (dto.dataHora() != null) {
+            if (agendamentoRepository.existsByBarbeiroIdAndDataHora(agendamento.getBarbeiro().getId(), dto.dataHora())) {
+                throw new AgendamentoConflitoException(
+                    "Barbeiro já possui agendamento neste horário: " + dto.dataHora());
+            }
             agendamento.setDataHora(dto.dataHora());
         }
 
