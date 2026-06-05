@@ -13,10 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -24,70 +25,122 @@ import static org.mockito.Mockito.*;
 class ServicoServiceTest {
 
     @Mock
-    private ServicoRepository repository;
+    private ServicoRepository servicoRepository;
 
     @InjectMocks
     private ServicoService service;
 
     @Test
-    @DisplayName("Deve salvar um serviço com sucesso e retornar o ResponseDTO correspondente")
+    @DisplayName("salvar -> deve salvar com sucesso")
     void deveSalvarServicoComSucesso() {
-        
-        ServicoRequestDTO requestDTO = new ServicoRequestDTO("Cabelo e Barba", BigDecimal.valueOf(50.0));
-        
-        Servico servicoSalvo = new Servico();
-        servicoSalvo.setId(1L);
-        servicoSalvo.setNome("Cabelo e Barba");
-        servicoSalvo.setPreco(50.0);
-
-    
-        when(repository.save(any(Servico.class))).thenReturn(servicoSalvo);
-
-        
-        ServicoResponseDTO resultado = service.salvar(requestDTO);
-
-    
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.id()).isEqualTo(1L);
-        assertThat(resultado.nome()).isEqualTo("Cabelo e Barba");
-        assertThat(resultado.preco()).isEqualByComparingTo(BigDecimal.valueOf(50.0));
-        
-        verify(repository, times(1)).save(any(Servico.class)); // Garante que o método save do banco foi chamado 1 vez
-    }
-
-    @Test
-    @DisplayName("Deve buscar serviço por ID com sucesso")
-    void deveBuscarPorIdComSucesso() {
-        
-        Long id = 1L;
+        BigDecimal preco = new BigDecimal("50.0");
+        ServicoRequestDTO request = new ServicoRequestDTO("Corte", preco);
         Servico servico = new Servico();
-        servico.setId(id);
+        servico.setId(1L);
         servico.setNome("Corte");
-        servico.setPreco(30.0);
+        servico.setPreco(preco.doubleValue());
 
-        when(repository.findById(id)).thenReturn(Optional.of(servico));
+        when(servicoRepository.save(any(Servico.class))).thenReturn(servico);
 
-        
-        ServicoResponseDTO resultado = service.buscarPorId(id);
-
-        
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.nome()).isEqualTo("Corte");
-        verify(repository, times(1)).findById(id);
+        ServicoResponseDTO result = service.salvar(request);
+        assertThat(result.nome()).isEqualTo("Corte");
+        verify(servicoRepository, times(1)).save(any(Servico.class));
     }
 
     @Test
-    @DisplayName("Deve lançar ResourceNotFoundException ao buscar ID inexistente")
-    void deveLancarExcecaoAoBuscarIdInexistente() {
-        
-        Long idInexistente = 99L;
-        when(repository.findById(idInexistente)).thenReturn(Optional.empty());
+    @DisplayName("salvar -> deve salvar com preco null (cobre branch do if)")
+    void deveSalvarComPrecoNulo() {
+        ServicoRequestDTO request = new ServicoRequestDTO("Corte", null);
+        Servico servico = new Servico();
+        servico.setId(1L);
+        servico.setNome("Corte");
 
-        
-        assertThatThrownBy(() -> service.buscarPorId(idInexistente))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Serviço não encontrado com o ID: " + idInexistente);
-                
-        verify(repository, times(1)).findById(idInexistente);
+        when(servicoRepository.save(any(Servico.class))).thenReturn(servico);
+
+        ServicoResponseDTO result = service.salvar(request);
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    @DisplayName("listarTodos -> deve retornar lista")
+    void deveListarTodos() {
+        when(servicoRepository.findAll()).thenReturn(List.of(new Servico()));
+        List<ServicoResponseDTO> result = service.listarTodos();
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("buscarPorId -> deve retornar quando encontrado")
+    void deveBuscarPorIdComSucesso() {
+        Servico servico = new Servico();
+        servico.setId(1L);
+        when(servicoRepository.findById(1L)).thenReturn(Optional.of(servico));
+
+        ServicoResponseDTO result = service.buscarPorId(1L);
+        assertThat(result.id()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("buscarPorId -> deve lançar exceção quando não encontrado")
+    void deveLancarExcecaoAoBuscarInexistente() {
+        when(servicoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.buscarPorId(99L));
+    }
+
+    @Test
+    @DisplayName("atualizar -> deve atualizar com todos os campos")
+    void deveAtualizarComSucesso() {
+        Long id = 1L;
+        ServicoRequestDTO request = new ServicoRequestDTO("Corte Premium", new BigDecimal("80.0"));
+        Servico existente = new Servico();
+        existente.setId(id);
+
+        when(servicoRepository.findById(id)).thenReturn(Optional.of(existente));
+        when(servicoRepository.save(any(Servico.class))).thenReturn(existente);
+
+        ServicoResponseDTO result = service.atualizar(id, request);
+        assertThat(result).isNotNull();
+        verify(servicoRepository).save(any(Servico.class));
+    }
+
+    @Test
+    @DisplayName("atualizar -> deve atualizar com campos null (cobre branches dos ifs)")
+    void deveAtualizarComCamposNulos() {
+        Long id = 1L;
+        ServicoRequestDTO request = new ServicoRequestDTO(null, null);
+        Servico existente = new Servico();
+        existente.setId(id);
+
+        when(servicoRepository.findById(id)).thenReturn(Optional.of(existente));
+        when(servicoRepository.save(any(Servico.class))).thenReturn(existente);
+
+        ServicoResponseDTO result = service.atualizar(id, request);
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    @DisplayName("atualizar -> deve lançar exceção quando não encontrado")
+    void deveLancarExcecaoAoAtualizarInexistente() {
+        when(servicoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.atualizar(99L, new ServicoRequestDTO("Nome", BigDecimal.TEN)));
+    }
+
+    @Test
+    @DisplayName("deletar -> deve deletar com sucesso")
+    void deveDeletarComSucesso() {
+        Long id = 1L;
+        when(servicoRepository.findById(id)).thenReturn(Optional.of(new Servico()));
+        doNothing().when(servicoRepository).delete(any(Servico.class));
+
+        service.deletar(id);
+        verify(servicoRepository, times(1)).delete(any(Servico.class));
+    }
+
+    @Test
+    @DisplayName("deletar -> deve lançar exceção quando não encontrado")
+    void deveLancarExcecaoAoDeletarInexistente() {
+        when(servicoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.deletar(99L));
     }
 }

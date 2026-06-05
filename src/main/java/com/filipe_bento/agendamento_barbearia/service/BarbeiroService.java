@@ -46,6 +46,7 @@ public class BarbeiroService {
     public BarbeiroResponseDTO salvar(BarbeiroRequestDTO dto) {
         Barbeiro barbeiro = new Barbeiro();
         barbeiro.setNome(dto.nome());
+        barbeiro.setEspecialidade(dto.especialidade());
 
         Barbeiro salvo = repository.save(barbeiro);
 
@@ -60,6 +61,7 @@ public class BarbeiroService {
 
         if (dto.nome() != null) {
             barbeiro.setNome(dto.nome());
+            barbeiro.setEspecialidade(dto.especialidade());
         }
 
         Barbeiro atualizado = repository.save(barbeiro);
